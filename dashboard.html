@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Dashboard Seguimiento Lanzamientos - Siegfried</title>
+<style>
+  :root {
+    --bg: #f6f7fb; --card: #fff; --ink: #1f2937; --muted: #6b7280;
+    --accent: #1e3a8a; --accent2: #2563eb; --border: #e5e7eb;
+    --sig: #1e3a8a; --mercado: #6b7280; --ms: #047857;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         background: var(--bg); color: var(--ink); }
+  header { background: var(--accent); color: #fff; padding: 18px 28px; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.2px; }
+  header .sub { opacity: 0.85; font-size: 13px; margin-top: 4px; }
+  .container { max-width: 1500px; margin: 0 auto; padding: 18px 28px 40px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 14px; align-items: center;
+             background: var(--card); padding: 14px 18px; border-radius: 10px;
+             box-shadow: 0 1px 2px rgba(0,0,0,0.04); margin-bottom: 18px;
+             border: 1px solid var(--border); }
+  .toolbar label { font-size: 13px; color: var(--muted); margin-right: 6px; }
+  .toolbar select { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);
+                    font-size: 14px; background: #fff; }
+  .seg-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 6px;
+                overflow: hidden; }
+  .seg-toggle button { background: #fff; border: 0; padding: 7px 14px; cursor: pointer;
+                       font-size: 13px; color: var(--ink); }
+  .seg-toggle button.active { background: var(--accent2); color: #fff; }
+  .months-card { background: var(--card); border: 1px solid var(--border);
+                 border-radius: 10px; padding: 14px 18px; margin-bottom: 18px;
+                 box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+  .months-card .row1 { display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+                       margin-bottom: 10px; }
+  .months-card .label { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .preset-btns { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+  .preset-btns button { background: #fff; border: 1px solid var(--border);
+                        padding: 5px 10px; border-radius: 6px; font-size: 12px;
+                        cursor: pointer; color: var(--ink); }
+  .preset-btns button:hover { background: #f3f4f6; }
+  .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { background: #fff; border: 1px solid var(--border); padding: 5px 10px;
+          border-radius: 16px; font-size: 12px; cursor: pointer; user-select: none;
+          color: var(--muted); transition: all 0.1s; }
+  .chip:hover { border-color: var(--accent2); }
+  .chip.selected { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+  /* Resalte del año más reciente */
+  .chip.latest-year { border-color: var(--accent); border-width: 2px;
+                      color: var(--accent); font-weight: 600; padding: 4px 10px; }
+  .chip.latest-year:hover { background: #eef2ff; }
+  .chip.latest-year.selected { background: var(--accent); border-color: var(--accent);
+                               color: #fff; }
+  .chip-count { font-size: 11px; color: var(--muted); margin-left: 6px; }
+  .year-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+              margin: 4px 0 10px; }
+  .year-row .label-inline { font-size: 12px; color: var(--muted); margin-right: 4px; }
+  .year-btn { background: #fff; border: 1px solid var(--border); padding: 5px 10px;
+              border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--ink); }
+  .year-btn:hover { background: #f3f4f6; }
+  .year-btn.open { background: #eef2ff; border-color: var(--accent2); color: var(--accent); }
+  .year-chips-section { background: #f9fafb; border: 1px dashed var(--border);
+                        border-radius: 6px; padding: 8px 10px; margin: 4px 0 10px; }
+  .year-chips-section .section-label { font-size: 11px; color: var(--muted);
+                                       margin-bottom: 6px; text-transform: uppercase;
+                                       letter-spacing: 0.5px; }
+  .recent-label { font-size: 11px; color: var(--muted); margin: 8px 0 6px;
+                  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  section.card { background: var(--card); border: 1px solid var(--border);
+                 border-radius: 10px; padding: 18px 20px; margin-bottom: 22px;
+                 box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+  section.card h2 { margin: 0 0 18px; font-size: 28px; color: var(--accent);
+                    display: flex; justify-content: space-between; align-items: baseline;
+                    font-weight: 800; letter-spacing: -0.3px;
+                    border-bottom: 3px solid var(--accent); padding-bottom: 10px; }
+  section.card h2 .sub-h { font-size: 12px; font-weight: 400; color: var(--muted);
+                           text-transform: none; letter-spacing: normal; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+  th, td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  th { background: #f9fafb; font-weight: 600; color: var(--muted); font-size: 12px;
+       text-transform: uppercase; letter-spacing: 0.4px;
+       position: sticky; top: 0; z-index: 20;
+       box-shadow: 0 2px 0 var(--border); }
+  tr.entity-header td { background: #eef2ff; font-weight: 600; color: var(--accent);
+                        border-top: 2px solid var(--accent); }
+  tr.prod-header td { background: #eef2ff; color: var(--accent);
+                      border-top: 3px solid var(--accent); padding-top: 10px; padding-bottom: 10px; }
+  tr.prod-header .prod-name { font-weight: 700; font-size: 15px; }
+  tr.prod-header .prod-tag  { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+                              color: var(--muted); margin-left: 10px; }
+  tr.prod-header .prod-sub  { font-weight: 500; color: var(--ink); font-size: 13px; }
+  tr.prod-header .prod-fam  { color: var(--muted); font-size: 11px; margin-left: 8px; }
+  tr.prod-header td.prod-total { font-weight: 700; color: var(--accent); font-size: 14px; }
+  tr.fila-ms-total td { background: #ecfdf5; font-weight: 700; }
+  tr.fila-ms-total td:first-child { color: var(--ms); padding-left: 22px; }
+  tr.fila-ms-total td:not(:first-child) { color: var(--ms); font-size: 14px; }
+  tr.pres-header td { background: #f9fafb; font-weight: 600; color: var(--ink);
+                      padding-left: 14px; border-top: 1px solid var(--border); }
+  tr.fila-si  td:first-child { color: var(--sig); font-weight: 500; padding-left: 32px; }
+  tr.fila-si  td:not(:first-child) { color: var(--sig); }
+  tr.fila-mdo td:first-child { color: var(--mercado); padding-left: 22px; font-weight: 500; }
+  tr.fila-mdo td { background: #fafafa; }
+  tr.fila-ms  td { font-weight: 600; }
+  tr.fila-ms  td:first-child { color: var(--ms); padding-left: 32px; }
+  tr.fila-ms  td:not(:first-child) { color: var(--ms); }
+  tr.fila-evol td:first-child { color: #92400e; font-style: italic; padding-left: 32px;
+                                font-size: 11px; font-weight: 500; }
+  tr.fila-evol td:not(:first-child) { font-size: 11px; font-weight: 600; }
+  tr.fila-evol .up   { color: #047857; }
+  tr.fila-evol .down { color: #b91c1c; }
+  tr.fila-evol .flat { color: var(--muted); }
+  .num { font-variant-numeric: tabular-nums; }
+  tr.familia-header td { background: #f3f4f6; font-weight: 700; color: var(--accent);
+                         border-top: 2px solid var(--accent); padding-left: 10px; }
+  .empty { color: var(--muted); padding: 18px; text-align: center; font-style: italic; }
+  .footer { color: var(--muted); font-size: 12px; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Dashboard Seguimiento Lanzamientos - Siegfried</h1>
+  <div class="sub">
+    <span id="hdr-meta"></span>
+  </div>
+  <div class="sub">Ventana mostrada: <span id="hdr-meses"></span></div>
+</header>
+
+<div class="container">
+
+  <div class="toolbar">
+    <label for="filtro-familia">Familia:</label>
+    <select id="filtro-familia">
+      <option value="__all__">Todas</option>
+    </select>
+    <span style="flex:1"></span>
+    <span style="font-size:13px;color:var(--muted);">Vista IQVIA:</span>
+    <div class="seg-toggle" id="iqvia-toggle">
+      <button data-view="molecula" class="active">Por Molécula</button>
+      <button data-view="atc">Por ATC</button>
+    </div>
+    <span style="font-size:13px;color:var(--muted);">Nivel:</span>
+    <div class="seg-toggle" id="agg-toggle">
+      <button data-agg="familia" class="active">Sólo Familia</button>
+      <button data-agg="presentacion">Con Presentaciones</button>
+    </div>
+    <span style="font-size:13px;color:var(--muted);">Evolución:</span>
+    <div class="seg-toggle" id="evol-toggle">
+      <button data-evol="off" class="active">Ocultar</button>
+      <button data-evol="on">Mostrar</button>
+    </div>
+  </div>
+
+  <div class="months-card">
+    <div class="row1">
+      <span class="label">Meses a mostrar <span class="chip-count" id="months-count"></span></span>
+      <div class="preset-btns" id="month-presets">
+        <button data-n="3">Últimos 3</button>
+        <button data-n="6">Últimos 6</button>
+        <button data-n="12">Últimos 12</button>
+        <button data-n="all">Todos</button>
+        <button data-n="none">Ninguno</button>
+      </div>
+    </div>
+    <div class="chip-list" id="months-chips"></div>
+  </div>
+
+  <section class="card">
+    <h2>IQVIA <span class="sub-h">Pack Siegfried vs Mercado · MS% = Siegfried / Total Mercado</span></h2>
+    <div id="iqvia-table-wrap"></div>
+  </section>
+
+  <section class="card">
+    <h2>VENTA INTERNA <span class="sub-h">Packs por Familia / Presentación</span></h2>
+    <div id="vi-table-wrap"></div>
+  </section>
+
+  <div class="footer">Fuente: IQUVIA_PM.xlsx · QLICK_VTA_INTERNA.xlsx · MAESTRO.xlsx</div>
+</div>
+
+<script>
+const DATA = {"all_months": ["Ene-2025", "Feb-2025", "Mar-2025", "Abr-2025", "May-2025", "Jun-2025", "Jul-2025", "Ago-2025", "Sep-2025", "Oct-2025", "Nov-2025", "Dic-2025", "Ene-2026", "Feb-2026", "Mar-2026", "Abr-2026"], "default_months": ["Nov-2025", "Dic-2025", "Ene-2026", "Feb-2026", "Mar-2026", "Abr-2026"], "families": ["ACNECLIN", "Alidial L", "BREXIL", "EMPAX", "EMPAX MET", "HIDRAVISOL", "Isis Nat", "RIVAXAN", "TELPRES", "TRIP", "VALQUIR"], "iqvia_products": [{"producto": "ACNECLIN PBA", "familia": "ACNECLIN", "molecula": "ADAPALENE_BENZOYL PEROXIDE", "atc": "D10A0 - PROD.ANTI-ACNE TOPICOS", "presentaciones": [{"label": "ACNECLIN PBA Gel x 30 gr", "iqvia_pack": "ACNECLIN PBA GEL 30G x 1", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 645.0, "Oct-2025": 116.0, "Nov-2025": 225.0, "Dic-2025": 156.0, "Ene-2026": 115.0, "Feb-2026": 98.0, "Mar-2026": 143.0, "Abr-2026": 148.0}}], "mercado_molecula": {"Ene-2025": 7092.0, "Feb-2025": 8338.0, "Mar-2025": 10499.0, "Abr-2025": 10704.0, "May-2025": 10734.0, "Jun-2025": 9564.0, "Jul-2025": 10585.0, "Ago-2025": 9677.0, "Sep-2025": 9851.0, "Oct-2025": 8272.0, "Nov-2025": 7394.0, "Dic-2025": 7656.0, "Ene-2026": 7201.0, "Feb-2026": 6783.0, "Mar-2026": 9306.0, "Abr-2026": 10264.0}, "mercado_atc": {"Ene-2025": 7092.0, "Feb-2025": 8338.0, "Mar-2025": 10499.0, "Abr-2025": 10704.0, "May-2025": 10734.0, "Jun-2025": 9564.0, "Jul-2025": 10585.0, "Ago-2025": 9677.0, "Sep-2025": 9851.0, "Oct-2025": 8272.0, "Nov-2025": 7394.0, "Dic-2025": 7656.0, "Ene-2026": 7201.0, "Feb-2026": 6783.0, "Mar-2026": 9306.0, "Abr-2026": 10264.0}}, {"producto": "ALIDIAL L", "familia": "Alidial L", "molecula": "LEVOCETIRIZINE", "atc": "R06A0 - ANTIHISTAMINICOS", "presentaciones": [{"label": "ALIDIAL L Gotas x 20 ml", "iqvia_pack": "ALIDIAL L GOTAS 5.00MG 20ML x 1 /ML", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 183.0, "Nov-2025": 519.0, "Dic-2025": 396.0, "Ene-2026": 322.0, "Feb-2026": 273.0, "Mar-2026": 510.0, "Abr-2026": 496.0}}, {"label": "ALIDIAL L comp rec x 10", "iqvia_pack": "ALIDIAL L TABL RECUBIE 5.00MG x 10", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 146.0, "Nov-2025": 249.0, "Dic-2025": 185.0, "Ene-2026": 183.0, "Feb-2026": 127.0, "Mar-2026": 225.0, "Abr-2026": 255.0}}, {"label": "ALIDIAL L comp rec x 30", "iqvia_pack": "ALIDIAL L TABL RECUBIE 5.00MG x 30", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 102.0, "Nov-2025": 368.0, "Dic-2025": 277.0, "Ene-2026": 296.0, "Feb-2026": 161.0, "Mar-2026": 326.0, "Abr-2026": 398.0}}], "mercado_molecula": {"Ene-2025": 34333.0, "Feb-2025": 32397.0, "Mar-2025": 38949.0, "Abr-2025": 40857.0, "May-2025": 40556.0, "Jun-2025": 39502.0, "Jul-2025": 39152.0, "Ago-2025": 43174.0, "Sep-2025": 46752.0, "Oct-2025": 53107.0, "Nov-2025": 43256.0, "Dic-2025": 50249.0, "Ene-2026": 41896.0, "Feb-2026": 32005.0, "Mar-2026": 41291.0, "Abr-2026": 41922.0}, "mercado_atc": {"Ene-2025": 34333.0, "Feb-2025": 32397.0, "Mar-2025": 38949.0, "Abr-2025": 40857.0, "May-2025": 40556.0, "Jun-2025": 39502.0, "Jul-2025": 39152.0, "Ago-2025": 43174.0, "Sep-2025": 46752.0, "Oct-2025": 53107.0, "Nov-2025": 43256.0, "Dic-2025": 50249.0, "Ene-2026": 41896.0, "Feb-2026": 32005.0, "Mar-2026": 41291.0, "Abr-2026": 41922.0}}, {"producto": "BREXIL", "familia": "BREXIL", "molecula": "BREXPIPRAZOLE", "atc": "N05A1 - ANTIPSICOTICOS ATIPICOS", "presentaciones": [{"label": "BREXIL 1 mg comp rec x 30", "iqvia_pack": "BREXIL TABL RECUBIE 1.00MG x 30", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 63.0}}, {"label": "BREXIL 2 mg comp rec x 30", "iqvia_pack": "BREXIL TABL RECUBIE 2.00MG x 30", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 26.0}}, {"label": "BREXIL 3 mg comp rec x 30", "iqvia_pack": "BREXIL TABL RECUBIE 3.00MG x 30", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 8.0}}, {"label": "BREXIL 4 mg comp rec x 30", "iqvia_pack": "BREXIL TABL RECUBIE 4.00MG x 30", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 7.0}}], "mercado_molecula": {"Ene-2025": 4413.0, "Feb-2025": 3972.0, "Mar-2025": 4098.0, "Abr-2025": 4466.0, "May-2025": 4573.0, "Jun-2025": 4537.0, "Jul-2025": 5066.0, "Ago-2025": 4381.0, "Sep-2025": 4099.0, "Oct-2025": 4652.0, "Nov-2025": 3743.0, "Dic-2025": 3390.0, "Ene-2026": 4745.0, "Feb-2026": 3661.0, "Mar-2026": 4579.0, "Abr-2026": 5305.0}, "mercado_atc": {"Ene-2025": 4413.0, "Feb-2025": 3972.0, "Mar-2025": 4098.0, "Abr-2025": 4466.0, "May-2025": 4573.0, "Jun-2025": 4537.0, "Jul-2025": 5066.0, "Ago-2025": 4381.0, "Sep-2025": 4099.0, "Oct-2025": 4652.0, "Nov-2025": 3743.0, "Dic-2025": 3390.0, "Ene-2026": 4745.0, "Feb-2026": 3661.0, "Mar-2026": 4579.0, "Abr-2026": 5305.0}}, {"producto": "EMPAX", "familia": "EMPAX", "molecula": "EMPAGLIFLOZIN", "atc": "A10P1 - ANTIDIAB INH SGLT2 SOLOS", "presentaciones": [{"label": "EMPAX 10 mg x 30 comp rec", "iqvia_pack": "EMPAX TABL RECUBIE 10mg x 30", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 308.0, "Abr-2025": 774.0, "May-2025": 465.0, "Jun-2025": 784.0, "Jul-2025": 890.0, "Ago-2025": 924.0, "Sep-2025": 977.0, "Oct-2025": 1170.0, "Nov-2025": 1259.0, "Dic-2025": 1635.0, "Ene-2026": 1554.0, "Feb-2026": 1528.0, "Mar-2026": 1587.0, "Abr-2026": 1931.0}}, {"label": "EMPAX 25 mg x 30 comp rec", "iqvia_pack": "EMPAX TABL RECUBIE 25mg x 30", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 205.0, "Abr-2025": 418.0, "May-2025": 264.0, "Jun-2025": 275.0, "Jul-2025": 378.0, "Ago-2025": 378.0, "Sep-2025": 511.0, "Oct-2025": 515.0, "Nov-2025": 565.0, "Dic-2025": 730.0, "Ene-2026": 659.0, "Feb-2026": 583.0, "Mar-2026": 706.0, "Abr-2026": 850.0}}], "mercado_molecula": {"Ene-2025": 27507.0, "Feb-2025": 26508.0, "Mar-2025": 30937.0, "Abr-2025": 37277.0, "May-2025": 33398.0, "Jun-2025": 36198.0, "Jul-2025": 37149.0, "Ago-2025": 33984.0, "Sep-2025": 33368.0, "Oct-2025": 38620.0, "Nov-2025": 34769.0, "Dic-2025": 40361.0, "Ene-2026": 40707.0, "Feb-2026": 35436.0, "Mar-2026": 40665.0, "Abr-2026": 40260.0}, "mercado_atc": {"Ene-2025": 27507.0, "Feb-2025": 26508.0, "Mar-2025": 30937.0, "Abr-2025": 37277.0, "May-2025": 33398.0, "Jun-2025": 36198.0, "Jul-2025": 37149.0, "Ago-2025": 33984.0, "Sep-2025": 33368.0, "Oct-2025": 38620.0, "Nov-2025": 34769.0, "Dic-2025": 40361.0, "Ene-2026": 40707.0, "Feb-2026": 35436.0, "Mar-2026": 40665.0, "Abr-2026": 40260.0}}, {"producto": "EMPAX MET", "familia": "EMPAX MET", "molecula": "EMPAGLIFLOZIN_METFORMIN", "atc": "A10P3 - ANTID COM INH SGLT2 Y BIG", "presentaciones": [{"label": "EMPAX MET 12,5/1000 x 60 comp rec", "iqvia_pack": "EMPAX MET TABL RECUBIE 1000MG x 60 /12.", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 3.0, "Abr-2025": 86.0, "May-2025": 74.0, "Jun-2025": 45.0, "Jul-2025": 160.0, "Ago-2025": 114.0, "Sep-2025": 107.0, "Oct-2025": 156.0, "Nov-2025": 157.0, "Dic-2025": 204.0, "Ene-2026": 182.0, "Feb-2026": 190.0, "Mar-2026": 214.0, "Abr-2026": 251.0}}, {"label": "EMPAX MET 12,5/850 x 60 comp rec", "iqvia_pack": "EMPAX MET TABL RECUBIE 850MG x 60 /12.", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 8.0, "Abr-2025": 71.0, "May-2025": 42.0, "Jun-2025": 20.0, "Jul-2025": 79.0, "Ago-2025": 64.0, "Sep-2025": 48.0, "Oct-2025": 52.0, "Nov-2025": 39.0, "Dic-2025": 32.0, "Ene-2026": 34.0, "Feb-2026": 45.0, "Mar-2026": 29.0, "Abr-2026": 45.0}}, {"label": "EMPAX MET 5/1000 x 60 comp rec", "iqvia_pack": "EMPAX MET TABL RECUBIE 1000MG x 60 /5", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 6.0, "Abr-2025": 65.0, "May-2025": 89.0, "Jun-2025": 57.0, "Jul-2025": 88.0, "Ago-2025": 60.0, "Sep-2025": 60.0, "Oct-2025": 68.0, "Nov-2025": 67.0, "Dic-2025": 70.0, "Ene-2026": 56.0, "Feb-2026": 66.0, "Mar-2026": 78.0, "Abr-2026": 85.0}}, {"label": "EMPAX MET 5/850 x 60 comp rec", "iqvia_pack": "EMPAX MET TABL RECUBIE 850MG x 60 /5", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 29.0, "Abr-2025": 67.0, "May-2025": 81.0, "Jun-2025": 81.0, "Jul-2025": 102.0, "Ago-2025": 66.0, "Sep-2025": 66.0, "Oct-2025": 73.0, "Nov-2025": 88.0, "Dic-2025": 79.0, "Ene-2026": 86.0, "Feb-2026": 72.0, "Mar-2026": 87.0, "Abr-2026": 94.0}}], "mercado_molecula": {"Ene-2025": 2632.0, "Feb-2025": 2660.0, "Mar-2025": 4003.0, "Abr-2025": 5222.0, "May-2025": 3434.0, "Jun-2025": 4351.0, "Jul-2025": 5007.0, "Ago-2025": 4106.0, "Sep-2025": 3906.0, "Oct-2025": 4257.0, "Nov-2025": 3993.0, "Dic-2025": 4315.0, "Ene-2026": 4310.0, "Feb-2026": 3796.0, "Mar-2026": 4481.0, "Abr-2026": 4353.0}, "mercado_atc": {"Ene-2025": 2632.0, "Feb-2025": 2660.0, "Mar-2025": 4003.0, "Abr-2025": 5222.0, "May-2025": 3434.0, "Jun-2025": 4351.0, "Jul-2025": 5007.0, "Ago-2025": 4106.0, "Sep-2025": 3906.0, "Oct-2025": 4257.0, "Nov-2025": 3993.0, "Dic-2025": 4315.0, "Ene-2026": 4310.0, "Feb-2026": 3796.0, "Mar-2026": 4481.0, "Abr-2026": 4353.0}}, {"producto": "ISIS NAT", "familia": "Isis Nat", "molecula": "DROSPIRENONE_ESTETROL", "atc": "G03A1 - PREPAR MONOF C/<50 MC EST", "presentaciones": [{"label": "ISIS NAT comp rec x 28", "iqvia_pack": "ISIS NAT TABL RECUBIE 14.2MG x 28 /3", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 1359.0, "Abr-2026": 900.0}}, {"label": "ISIS NAT comp rec x 56 (2 x 28)", "iqvia_pack": "ISIS NAT TABL RECUBIE 14.2MG x 56 /3", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 3.0}}, {"label": "ISIS NAT comp rec x 84 (3 x 28)", "iqvia_pack": "ISIS NAT TABL RECUBIE 14.2MG x 84 /3", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 3.0}}], "mercado_molecula": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 1359.0, "Abr-2026": 906.0}, "mercado_atc": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 1359.0, "Abr-2026": 906.0}}, {"producto": "TELPRES", "familia": "TELPRES", "molecula": "TELMISARTAN", "atc": "C09C0 - ANGIOTENSIN-II ANTAG SOLO", "presentaciones": [{"label": "TELPRES 40 MG X 28 comp CRAVERI", "iqvia_pack": "TELPRES TABL 40mg x 28", "si": {"Ene-2025": 2612.0, "Feb-2025": 2643.0, "Mar-2025": 2725.0, "Abr-2025": 2041.0, "May-2025": 2933.0, "Jun-2025": 2461.0, "Jul-2025": 2780.0, "Ago-2025": 2679.0, "Sep-2025": 2622.0, "Oct-2025": 2703.0, "Nov-2025": 2404.0, "Dic-2025": 2371.0, "Ene-2026": 1738.0, "Feb-2026": 1592.0, "Mar-2026": 2141.0, "Abr-2026": 2452.0}}, {"label": "TELPRES 80 MG X 28 comp CRAVERI", "iqvia_pack": "TELPRES TABL 80mg x 28", "si": {"Ene-2025": 2391.0, "Feb-2025": 2514.0, "Mar-2025": 2590.0, "Abr-2025": 2504.0, "May-2025": 2532.0, "Jun-2025": 2395.0, "Jul-2025": 2763.0, "Ago-2025": 2565.0, "Sep-2025": 2593.0, "Oct-2025": 2769.0, "Nov-2025": 2481.0, "Dic-2025": 2373.0, "Ene-2026": 1669.0, "Feb-2026": 1606.0, "Mar-2026": 1949.0, "Abr-2026": 2120.0}}], "mercado_molecula": {"Ene-2025": 97009.0, "Feb-2025": 94131.0, "Mar-2025": 101777.0, "Abr-2025": 97425.0, "May-2025": 97917.0, "Jun-2025": 96588.0, "Jul-2025": 102711.0, "Ago-2025": 97124.0, "Sep-2025": 96036.0, "Oct-2025": 101822.0, "Nov-2025": 91953.0, "Dic-2025": 101372.0, "Ene-2026": 95939.0, "Feb-2026": 85413.0, "Mar-2026": 98669.0, "Abr-2026": 97245.0}, "mercado_atc": {"Ene-2025": 97009.0, "Feb-2025": 94131.0, "Mar-2025": 101777.0, "Abr-2025": 97425.0, "May-2025": 97917.0, "Jun-2025": 96588.0, "Jul-2025": 102711.0, "Ago-2025": 97124.0, "Sep-2025": 96036.0, "Oct-2025": 101822.0, "Nov-2025": 91953.0, "Dic-2025": 101372.0, "Ene-2026": 95939.0, "Feb-2026": 85413.0, "Mar-2026": 98669.0, "Abr-2026": 97245.0}}, {"producto": "TRIP +45", "familia": "TRIP", "molecula": "FOLIC ACID_MAGNESIUM_PANAX GINSENG_RESVERATROL_UBIQUINONE(S)_VITAMIN E", "atc": "V03X0 - TOD.DEMAS.PROD.TERAPEUT", "presentaciones": [{"label": "TRIP +45 comp recub x 30", "iqvia_pack": "TRIP +45 TABL RECUBIE x 30", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 1082.0, "Oct-2025": 1878.0, "Nov-2025": 2171.0, "Dic-2025": 1702.0, "Ene-2026": 1957.0, "Feb-2026": 1575.0, "Mar-2026": 2210.0, "Abr-2026": 2521.0}}], "mercado_molecula": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 1082.0, "Oct-2025": 1878.0, "Nov-2025": 2171.0, "Dic-2025": 1702.0, "Ene-2026": 1957.0, "Feb-2026": 1575.0, "Mar-2026": 2210.0, "Abr-2026": 2521.0}, "mercado_atc": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 1082.0, "Oct-2025": 1878.0, "Nov-2025": 2171.0, "Dic-2025": 1702.0, "Ene-2026": 1957.0, "Feb-2026": 1575.0, "Mar-2026": 2210.0, "Abr-2026": 2521.0}}, {"producto": "TRIP D3 PLUS", "familia": "TRIP", "molecula": "COLECALCIFEROL_MENAQUINONE-7", "atc": "A11X9 - OTR VIT SOLAS Y COMB", "presentaciones": [{"label": "TRIP D3 Plus comp recub x 30", "iqvia_pack": "TRIP D3 PLUS TABL RECUBIE x 30", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 1216.0, "Oct-2025": 1364.0, "Nov-2025": 1515.0, "Dic-2025": 740.0, "Ene-2026": 1083.0, "Feb-2026": 730.0, "Mar-2026": 1160.0, "Abr-2026": 1485.0}}], "mercado_molecula": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 1216.0, "Oct-2025": 1364.0, "Nov-2025": 1515.0, "Dic-2025": 740.0, "Ene-2026": 1083.0, "Feb-2026": 730.0, "Mar-2026": 1160.0, "Abr-2026": 1485.0}, "mercado_atc": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 1216.0, "Oct-2025": 1364.0, "Nov-2025": 1515.0, "Dic-2025": 740.0, "Ene-2026": 1083.0, "Feb-2026": 730.0, "Mar-2026": 1160.0, "Abr-2026": 1485.0}}, {"producto": "TRIP MAGNESIO", "familia": "TRIP", "molecula": "ASCORBIC ACID_MAGNESIUM", "atc": "A12C1 - SUPLEMENTOS DE MAGNESIO", "presentaciones": [{"label": "TRIP Magnesio comp recub x 30", "iqvia_pack": "TRIP MAGNESIO TABL x 30", "si": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 1067.0, "Oct-2025": 1411.0, "Nov-2025": 1609.0, "Dic-2025": 836.0, "Ene-2026": 1124.0, "Feb-2026": 619.0, "Mar-2026": 1043.0, "Abr-2026": 1141.0}}], "mercado_molecula": {"Ene-2025": 6.0, "Feb-2025": 25.0, "Mar-2025": 6.0, "Abr-2025": 13.0, "May-2025": 29.0, "Jun-2025": 51.0, "Jul-2025": 7.0, "Ago-2025": 25.0, "Sep-2025": 1091.0, "Oct-2025": 1435.0, "Nov-2025": 1628.0, "Dic-2025": 864.0, "Ene-2026": 1160.0, "Feb-2026": 636.0, "Mar-2026": 1048.0, "Abr-2026": 1143.0}, "mercado_atc": {"Ene-2025": 6.0, "Feb-2025": 25.0, "Mar-2025": 6.0, "Abr-2025": 13.0, "May-2025": 29.0, "Jun-2025": 51.0, "Jul-2025": 58.0, "Ago-2025": 75.0, "Sep-2025": 1157.0, "Oct-2025": 1435.0, "Nov-2025": 1628.0, "Dic-2025": 937.0, "Ene-2026": 1162.0, "Feb-2026": 695.0, "Mar-2026": 1095.0, "Abr-2026": 1143.0}}, {"producto": "VALQUIR", "familia": "VALQUIR", "molecula": "VORTIOXETINE", "atc": "N06A9 - TOD.DEM.ANTIDEPRESIVOS", "presentaciones": [{"label": "VALQUIR 10 comp rec x 30     Trazado CSG", "iqvia_pack": "VALQUIR TABL RECUBIE 10mg x 30", "si": {"Ene-2025": 251.0, "Feb-2025": 272.0, "Mar-2025": 276.0, "Abr-2025": 275.0, "May-2025": 338.0, "Jun-2025": 396.0, "Jul-2025": 378.0, "Ago-2025": 472.0, "Sep-2025": 557.0, "Oct-2025": 624.0, "Nov-2025": 613.0, "Dic-2025": 683.0, "Ene-2026": 644.0, "Feb-2026": 559.0, "Mar-2026": 690.0, "Abr-2026": 650.0}}, {"label": "VALQUIR 20 comp rec x 30     Trazado CSG", "iqvia_pack": "VALQUIR TABL RECUBIE 20mg x 30", "si": {"Ene-2025": 221.0, "Feb-2025": 204.0, "Mar-2025": 249.0, "Abr-2025": 251.0, "May-2025": 256.0, "Jun-2025": 282.0, "Jul-2025": 312.0, "Ago-2025": 352.0, "Sep-2025": 374.0, "Oct-2025": 441.0, "Nov-2025": 427.0, "Dic-2025": 589.0, "Ene-2026": 531.0, "Feb-2026": 469.0, "Mar-2026": 513.0, "Abr-2026": 525.0}}, {"label": "VALQUIR 5 comp rec x 30      Trazado CSG", "iqvia_pack": "VALQUIR TABL RECUBIE 5.00MG x 30", "si": {"Ene-2025": 87.0, "Feb-2025": 80.0, "Mar-2025": 114.0, "Abr-2025": 109.0, "May-2025": 109.0, "Jun-2025": 127.0, "Jul-2025": 118.0, "Ago-2025": 118.0, "Sep-2025": 150.0, "Oct-2025": 160.0, "Nov-2025": 143.0, "Dic-2025": 211.0, "Ene-2026": 200.0, "Feb-2026": 154.0, "Mar-2026": 204.0, "Abr-2026": 235.0}}], "mercado_molecula": {"Ene-2025": 17929.0, "Feb-2025": 17051.0, "Mar-2025": 18760.0, "Abr-2025": 19502.0, "May-2025": 19786.0, "Jun-2025": 19113.0, "Jul-2025": 21941.0, "Ago-2025": 20291.0, "Sep-2025": 20900.0, "Oct-2025": 22812.0, "Nov-2025": 20371.0, "Dic-2025": 23522.0, "Ene-2026": 25439.0, "Feb-2026": 20869.0, "Mar-2026": 24328.0, "Abr-2026": 24357.0}, "mercado_atc": {"Ene-2025": 17929.0, "Feb-2025": 17051.0, "Mar-2025": 18760.0, "Abr-2025": 19502.0, "May-2025": 19786.0, "Jun-2025": 19113.0, "Jul-2025": 21941.0, "Ago-2025": 20291.0, "Sep-2025": 20900.0, "Oct-2025": 22812.0, "Nov-2025": 20371.0, "Dic-2025": 23522.0, "Ene-2026": 25439.0, "Feb-2026": 20869.0, "Mar-2026": 24328.0, "Abr-2026": 24357.0}}], "venta_interna": [{"gran_familia": "ACNECLIN", "familia": "ACNECLIN PBA", "producto": "ACNECLIN", "presentacion": "ACNECLIN PBA Gel x 30 gr", "codigo": "0003004902", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 2880.0, "Oct-2025": 40.0, "Nov-2025": 26.0, "Dic-2025": 78.0, "Ene-2026": -2.0, "Feb-2026": 40.0, "Mar-2026": 200.0, "Abr-2026": -1.0}}, {"gran_familia": "Alidial L", "familia": "ALIDIAL", "producto": "ALIDIAL", "presentacion": "ALIDIAL L comp rec x 10", "codigo": "0003037904", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 7380.0, "Oct-2025": 1120.0, "Nov-2025": 140.0, "Dic-2025": 80.0, "Ene-2026": 80.0, "Feb-2026": 6088.0, "Mar-2026": 174.0, "Abr-2026": 7669.0}}, {"gran_familia": "Alidial L", "familia": "ALIDIAL", "producto": "ALIDIAL", "presentacion": "ALIDIAL L comp rec x 30", "codigo": "0003037905", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 9084.0, "Oct-2025": 1080.0, "Nov-2025": 240.0, "Dic-2025": 240.0, "Ene-2026": 199.0, "Feb-2026": 10275.0, "Mar-2026": 198.0, "Abr-2026": 8158.0}}, {"gran_familia": "Alidial L", "familia": "ALIDIAL", "producto": "ALIDIAL", "presentacion": "ALIDIAL L Gotas x 20 ml", "codigo": "0003037906", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 18800.0, "Oct-2025": 2596.0, "Nov-2025": 500.0, "Dic-2025": 100.0, "Ene-2026": 200.0, "Feb-2026": 650.0, "Mar-2026": 950.0, "Abr-2026": 447.0}}, {"gran_familia": "BREXIL", "familia": "BREXIL", "producto": "BREXIL", "presentacion": "BREXIL 1 mg comp rec x 30", "codigo": "0003025201", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 3714.0}}, {"gran_familia": "BREXIL", "familia": "BREXIL", "producto": "BREXIL", "presentacion": "BREXIL 2 mg comp rec x 30", "codigo": "0003025202", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 3108.0}}, {"gran_familia": "BREXIL", "familia": "BREXIL", "producto": "BREXIL", "presentacion": "BREXIL 3 mg comp rec x 30", "codigo": "0003025203", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 1633.0}}, {"gran_familia": "BREXIL", "familia": "BREXIL", "producto": "BREXIL", "presentacion": "BREXIL 4 mg comp rec x 30", "codigo": "0003025204", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 1603.0}}, {"gran_familia": "EMPAX", "familia": "EMPAX", "producto": "EMPAX", "presentacion": "EMPAX 10 mg x 30 comp rec", "codigo": "0003022201", "data": {"Ene-2025": 0.0, "Feb-2025": 6842.0, "Mar-2025": 1093.0, "Abr-2025": 1240.0, "May-2025": 500.0, "Jun-2025": 5492.0, "Jul-2025": 1180.0, "Ago-2025": 700.0, "Sep-2025": 900.0, "Oct-2025": 920.0, "Nov-2025": 1240.0, "Dic-2025": 5042.0, "Ene-2026": 1519.0, "Feb-2026": 1674.0, "Mar-2026": 1420.0, "Abr-2026": 7816.0}}, {"gran_familia": "EMPAX", "familia": "EMPAX", "producto": "EMPAX", "presentacion": "EMPAX 25 mg x 30 comp rec", "codigo": "0003022202", "data": {"Ene-2025": 0.0, "Feb-2025": 6201.0, "Mar-2025": 923.0, "Abr-2025": 760.0, "May-2025": 340.0, "Jun-2025": 180.0, "Jul-2025": 3404.0, "Ago-2025": 280.0, "Sep-2025": 520.0, "Oct-2025": 360.0, "Nov-2025": 520.0, "Dic-2025": 600.0, "Ene-2026": 720.0, "Feb-2026": 559.0, "Mar-2026": 4331.0, "Abr-2026": 918.0}}, {"gran_familia": "EMPAX", "familia": "EMPAX MET", "producto": "EMPAX", "presentacion": "EMPAX MET 5/850 x 60 comp rec", "codigo": "0003022203", "data": {"Ene-2025": 0.0, "Feb-2025": 2943.0, "Mar-2025": 134.0, "Abr-2025": 452.0, "May-2025": 100.0, "Jun-2025": 60.0, "Jul-2025": 110.0, "Ago-2025": 70.0, "Sep-2025": 90.0, "Oct-2025": 60.0, "Nov-2025": 70.0, "Dic-2025": 40.0, "Ene-2026": 100.0, "Feb-2026": 1541.0, "Mar-2026": 60.0, "Abr-2026": 90.0}}, {"gran_familia": "EMPAX", "familia": "EMPAX MET", "producto": "EMPAX", "presentacion": "EMPAX MET 5/1000 x 60 comp rec", "codigo": "0003022204", "data": {"Ene-2025": 0.0, "Feb-2025": 1221.0, "Mar-2025": 86.0, "Abr-2025": 350.0, "May-2025": 100.0, "Jun-2025": 1396.0, "Jul-2025": 90.0, "Ago-2025": 50.0, "Sep-2025": 30.0, "Oct-2025": 60.0, "Nov-2025": 70.0, "Dic-2025": 70.0, "Ene-2026": 70.0, "Feb-2026": 30.0, "Mar-2026": 60.0, "Abr-2026": 90.0}}, {"gran_familia": "EMPAX", "familia": "EMPAX MET", "producto": "EMPAX", "presentacion": "EMPAX MET 12,5/850 x 60 comp rec", "codigo": "0003022205", "data": {"Ene-2025": 0.0, "Feb-2025": 563.0, "Mar-2025": 90.0, "Abr-2025": 400.0, "May-2025": 50.0, "Jun-2025": 1290.0, "Jul-2025": 693.0, "Ago-2025": 30.0, "Sep-2025": 60.0, "Oct-2025": 70.0, "Nov-2025": 40.0, "Dic-2025": 30.0, "Ene-2026": 30.0, "Feb-2026": 0.0, "Mar-2026": 20.0, "Abr-2026": 50.0}}, {"gran_familia": "EMPAX", "familia": "EMPAX MET", "producto": "EMPAX", "presentacion": "EMPAX MET 12,5/1000 x 60 comp rec", "codigo": "0003022206", "data": {"Ene-2025": 0.0, "Feb-2025": 676.0, "Mar-2025": 85.0, "Abr-2025": 540.0, "May-2025": 51.0, "Jun-2025": 2048.0, "Jul-2025": 180.0, "Ago-2025": 130.0, "Sep-2025": 140.0, "Oct-2025": 110.0, "Nov-2025": 190.0, "Dic-2025": 160.0, "Ene-2026": 160.0, "Feb-2026": 140.0, "Mar-2026": 190.0, "Abr-2026": 1552.0}}, {"gran_familia": "HIDRAVISOL", "familia": "HIDRAVISOL", "producto": "HIDRAVISOL", "presentacion": "HIDRAVISOL BEBIDA FRUTILLA x 200 ml", "codigo": "0003098304", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "HIDRAVISOL", "familia": "HIDRAVISOL", "producto": "HIDRAVISOL", "presentacion": "HIDRAVISOL BEBIDA FRUTILLA x 500 ml", "codigo": "0003098303", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "HIDRAVISOL", "familia": "HIDRAVISOL", "producto": "HIDRAVISOL", "presentacion": "HIDRAVISOL BEBIDA MANZANA x 200 ml", "codigo": "0003098302", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "HIDRAVISOL", "familia": "HIDRAVISOL", "producto": "HIDRAVISOL", "presentacion": "HIDRAVISOL BEBIDA MANZANA x 500 ml", "codigo": "0003098301", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "Isis Nat", "familia": "ISIS NAT", "producto": "ISIS", "presentacion": "ISIS NAT comp rec x 28", "codigo": "0003076323", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 2340.0, "Abr-2026": 2250.0}}, {"gran_familia": "Isis Nat", "familia": "ISIS NAT", "producto": "ISIS", "presentacion": "ISIS NAT comp rec x 56 (2 x 28)", "codigo": "0003076324", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 468.0}}, {"gran_familia": "Isis Nat", "familia": "ISIS NAT", "producto": "ISIS", "presentacion": "ISIS NAT comp rec x 84 (3 x 28)", "codigo": "0003076325", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 324.0}}, {"gran_familia": "Isis Nat", "familia": "ISIS NAT", "producto": "ISIS PACK", "presentacion": "ISIS NAT comp rec x 28 pack x 10", "codigo": "0003076326", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 34.0}}, {"gran_familia": "RIVAXAN", "familia": "RIVAXAN", "producto": "RIVAXAN", "presentacion": "RIVAXAN 2,5 mg comp rec x 30", "codigo": "0003058401", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "RIVAXAN", "familia": "RIVAXAN", "producto": "RIVAXAN", "presentacion": "RIVAXAN 10 mg comp rec x 10", "codigo": "0003058402", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "RIVAXAN", "familia": "RIVAXAN", "producto": "RIVAXAN", "presentacion": "RIVAXAN 10 mg comp rec x 30", "codigo": "0003058403", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "RIVAXAN", "familia": "RIVAXAN", "producto": "RIVAXAN", "presentacion": "RIVAXAN 15 mg comp rec x 30", "codigo": "0003058404", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "RIVAXAN", "familia": "RIVAXAN", "producto": "RIVAXAN", "presentacion": "RIVAXAN 20 mg comp rec x 30", "codigo": "0003058405", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "TELPRES", "familia": "TELPRES", "producto": "TELPRES", "presentacion": "TELPRES 40 MG X 28 comp CRAVERI", "codigo": "0003061301", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 538.0, "Ene-2026": 2235.0, "Feb-2026": 2002.0, "Mar-2026": 2288.0, "Abr-2026": 2589.0}}, {"gran_familia": "TELPRES", "familia": "TELPRES", "producto": "TELPRES", "presentacion": "TELPRES 80 MG X 28 comp CRAVERI", "codigo": "0003061302", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 375.0, "Ene-2026": 2230.0, "Feb-2026": 1933.0, "Mar-2026": 1468.0, "Abr-2026": 2966.0}}, {"gran_familia": "TELPRES", "familia": "TELPRES", "producto": "TELPRES", "presentacion": "TELPRES AMLO 40/5 x 28 comp BI CRAVER", "codigo": "0003088901", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "TELPRES", "familia": "TELPRES", "producto": "TELPRES", "presentacion": "TELPRES AMLO 40/5 x 28 comp BI SIEG", "codigo": "0003088903", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "TELPRES", "familia": "TELPRES", "producto": "TELPRES", "presentacion": "TELPRES AMLO 80/5 x 28 comp BI CRAVER", "codigo": "0003088902", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "TELPRES", "familia": "TELPRES", "producto": "TELPRES", "presentacion": "TELPRES AMLO 80/5 x 28 comp BI SIEG", "codigo": "0003088904", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "TELPRES", "familia": "TELPRES", "producto": "TELPRES", "presentacion": "TELPRES PLUS 40/12.5 x 28 comp BI CRAVER", "codigo": "0003088801", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "TELPRES", "familia": "TELPRES", "producto": "TELPRES", "presentacion": "TELPRES PLUS 80/12.5 x 28 comp BI CRAVER", "codigo": "0003088802", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 0.0, "Oct-2025": 0.0, "Nov-2025": 0.0, "Dic-2025": 0.0, "Ene-2026": 0.0, "Feb-2026": 0.0, "Mar-2026": 0.0, "Abr-2026": 0.0}}, {"gran_familia": "TRIP", "familia": "TRIP", "producto": "TRIP", "presentacion": "TRIP +45 comp recub x 30", "codigo": "0003023210", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 3060.0, "Oct-2025": 2300.0, "Nov-2025": 1679.0, "Dic-2025": 1580.0, "Ene-2026": 1538.0, "Feb-2026": 1660.0, "Mar-2026": 1314.0, "Abr-2026": 2720.0}}, {"gran_familia": "TRIP", "familia": "TRIP", "producto": "TRIP", "presentacion": "TRIP D3 Plus comp recub x 30", "codigo": "0003023211", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 3260.0, "Oct-2025": 1700.0, "Nov-2025": 980.0, "Dic-2025": 740.0, "Ene-2026": 620.0, "Feb-2026": 460.0, "Mar-2026": 399.0, "Abr-2026": 1737.0}}, {"gran_familia": "TRIP", "familia": "TRIP", "producto": "TRIP", "presentacion": "TRIP Magnesio comp recub x 30", "codigo": "0003023212", "data": {"Ene-2025": 0.0, "Feb-2025": 0.0, "Mar-2025": 0.0, "Abr-2025": 0.0, "May-2025": 0.0, "Jun-2025": 0.0, "Jul-2025": 0.0, "Ago-2025": 0.0, "Sep-2025": 3140.0, "Oct-2025": 2059.0, "Nov-2025": 1160.0, "Dic-2025": 760.0, "Ene-2026": 899.0, "Feb-2026": 338.0, "Mar-2026": 360.0, "Abr-2026": 1080.0}}, {"gran_familia": "VALQUIR", "familia": "VALQUIR", "producto": "VALQUIR", "presentacion": "VALQUIR 5 comp rec x 30      Trazado CSG", "codigo": "0003066701", "data": {"Ene-2025": 96.0, "Feb-2025": 60.0, "Mar-2025": 108.0, "Abr-2025": 108.0, "May-2025": 60.0, "Jun-2025": 108.0, "Jul-2025": 108.0, "Ago-2025": 156.0, "Sep-2025": 144.0, "Oct-2025": 108.0, "Nov-2025": 144.0, "Dic-2025": 120.0, "Ene-2026": 1572.0, "Feb-2026": 252.0, "Mar-2026": 192.0, "Abr-2026": 216.0}}, {"gran_familia": "VALQUIR", "familia": "VALQUIR", "producto": "VALQUIR", "presentacion": "VALQUIR 10 comp rec x 30     Trazado CSG", "codigo": "0003066702", "data": {"Ene-2025": 300.0, "Feb-2025": 324.0, "Mar-2025": 276.0, "Abr-2025": 180.0, "May-2025": 311.0, "Jun-2025": 348.0, "Jul-2025": 420.0, "Ago-2025": 408.0, "Sep-2025": 564.0, "Oct-2025": 552.0, "Nov-2025": 696.0, "Dic-2025": 190.0, "Ene-2026": 968.0, "Feb-2026": 2197.0, "Mar-2026": 564.0, "Abr-2026": 708.0}}, {"gran_familia": "VALQUIR", "familia": "VALQUIR", "producto": "VALQUIR", "presentacion": "VALQUIR 20 comp rec x 30     Trazado CSG", "codigo": "0003066703", "data": {"Ene-2025": 3998.0, "Feb-2025": 264.0, "Mar-2025": 204.0, "Abr-2025": 156.0, "May-2025": 240.0, "Jun-2025": 251.0, "Jul-2025": 336.0, "Ago-2025": 348.0, "Sep-2025": 300.0, "Oct-2025": 468.0, "Nov-2025": 408.0, "Dic-2025": 420.0, "Ene-2026": 612.0, "Feb-2026": 4122.0, "Mar-2026": 560.0, "Abr-2026": 455.0}}], "meta": {"last_update": "20/05/2026 14:52", "latest_iqvia": "Abr-2026", "latest_qlick": "Abr-2026"}};
+
+const fmt = (n) => {
+  if (n === null || n === undefined || isNaN(n)) return "—";
+  if (n === 0) return "0";
+  return Math.round(n).toLocaleString("es-AR");
+};
+const fmtPct = (n) => (n === 0 || !isFinite(n)) ? "0,0%" :
+  n.toLocaleString("es-AR", {minimumFractionDigits: 1, maximumFractionDigits: 1}) + "%";
+
+// --- Estado ---
+let selectedMonths = DATA.default_months.slice();  // arranca con los 6 default
+let currentView    = "molecula";   // molecula | atc
+let aggLevel       = "familia";      // familia | presentacion
+let showEvol       = false;          // mostrar fila Δ mes a mes
+
+const fmtEvol = (cur, prev) => {
+  if (prev == null || prev === 0) return `<span class="flat">—</span>`;
+  if (cur == null) return `<span class="flat">—</span>`;
+  const delta = (cur - prev) / prev * 100;
+  if (Math.abs(delta) < 0.05) return `<span class="flat">0,0%</span>`;
+  const arrow = delta > 0 ? "▲" : "▼";
+  const klass = delta > 0 ? "up"  : "down";
+  return `<span class="${klass}">${arrow} ${delta.toLocaleString("es-AR",{minimumFractionDigits:1,maximumFractionDigits:1})}%</span>`;
+};
+
+// --- Filtro familia ---
+const sel = document.getElementById("filtro-familia");
+DATA.families.forEach(f => {
+  const o = document.createElement("option");
+  o.value = f; o.textContent = f;
+  sel.appendChild(o);
+});
+sel.addEventListener("change", renderAll);
+
+// --- Toggle Molécula / ATC ---
+document.querySelectorAll("#iqvia-toggle button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("#iqvia-toggle button").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    currentView = b.dataset.view;
+    renderIqvia();
+  });
+});
+
+// --- Toggle Nivel: Presentación / Familia ---
+document.querySelectorAll("#agg-toggle button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("#agg-toggle button").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    aggLevel = b.dataset.agg;
+    renderIqvia();
+  });
+});
+
+// --- Toggle Evolución ---
+document.querySelectorAll("#evol-toggle button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("#evol-toggle button").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    showEvol = b.dataset.evol === "on";
+    renderIqvia();
+    renderVI();
+  });
+});
+
+// --- Chips de meses: últimos 12 + colapsables por año ---
+const RECENT_N = 12;
+const recentMonths = DATA.all_months.slice(-RECENT_N);
+const olderMonths  = DATA.all_months.slice(0, -RECENT_N);
+const monthsByYear = {};
+olderMonths.forEach(m => {
+  const y = m.split('-')[1];
+  if (!monthsByYear[y]) monthsByYear[y] = [];
+  monthsByYear[y].push(m);
+});
+const olderYears = Object.keys(monthsByYear).sort();
+const expandedYears = new Set();
+
+const LATEST_YEAR = DATA.all_months[DATA.all_months.length - 1].split('-')[1];
+function chipHTML(m) {
+  const cls = ["chip"];
+  if (selectedMonths.includes(m)) cls.push("selected");
+  if (m.split('-')[1] === LATEST_YEAR) cls.push("latest-year");
+  return `<span class="${cls.join(' ')}" data-month="${m}">${m}</span>`;
+}
+
+function renderChips() {
+  const wrap = document.getElementById("months-chips");
+  let html = "";
+  if (olderYears.length > 0) {
+    html += `<div class="year-row"><span class="label-inline">Histórico:</span>`;
+    olderYears.forEach(y => {
+      const open = expandedYears.has(y);
+      html += `<button class="year-btn${open ? " open" : ""}" data-year="${y}">${open ? "▼" : "▶"} ${y}</button>`;
+    });
+    html += `</div>`;
+    olderYears.forEach(y => {
+      if (expandedYears.has(y)) {
+        html += `<div class="year-chips-section">` +
+          `<div class="section-label">Año ${y}</div>` +
+          `<div class="chip-list">` +
+            monthsByYear[y].map(chipHTML).join("") +
+          `</div></div>`;
+      }
+    });
+  }
+  html += `<div class="recent-label">Últimos ${RECENT_N} meses</div>`;
+  html += `<div class="chip-list">${recentMonths.map(chipHTML).join("")}</div>`;
+  wrap.innerHTML = html;
+
+  // Listeners
+  wrap.querySelectorAll(".chip").forEach(c => {
+    c.addEventListener("click", () => toggleMonth(c.dataset.month));
+  });
+  wrap.querySelectorAll(".year-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      const y = b.dataset.year;
+      if (expandedYears.has(y)) expandedYears.delete(y);
+      else expandedYears.add(y);
+      renderChips();
+    });
+  });
+}
+
+function toggleMonth(m) {
+  if (selectedMonths.includes(m)) {
+    selectedMonths = selectedMonths.filter(x => x !== m);
+  } else {
+    selectedMonths.push(m);
+    selectedMonths.sort((a, b) => DATA.all_months.indexOf(a) - DATA.all_months.indexOf(b));
+  }
+  // refresca el estado visual de TODOS los chips visibles
+  document.querySelectorAll("#months-chips .chip").forEach(c => {
+    c.classList.toggle("selected", selectedMonths.includes(c.dataset.month));
+  });
+  renderAll();
+}
+
+renderChips();
+
+// --- Atajos ---
+document.querySelectorAll("#month-presets button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const n = btn.dataset.n;
+    if (n === "all")        selectedMonths = DATA.all_months.slice();
+    else if (n === "none")  selectedMonths = [];
+    else                    selectedMonths = DATA.all_months.slice(-parseInt(n));
+    document.querySelectorAll("#months-chips .chip").forEach(c => {
+      c.classList.toggle("selected", selectedMonths.includes(c.dataset.month));
+    });
+    renderAll();
+  });
+});
+
+function updateHeader() {
+  document.getElementById("hdr-meses").textContent =
+    selectedMonths.length ? selectedMonths.join(" · ") : "(sin meses seleccionados)";
+  document.getElementById("months-count").textContent =
+    `(${selectedMonths.length} de ${DATA.all_months.length})`;
+}
+
+// Cabecera de metadata (una sola vez al cargar)
+(function setMeta() {
+  const m = DATA.meta || {};
+  document.getElementById("hdr-meta").innerHTML =
+    `Última actualización: <b>${m.last_update || "—"}</b>` +
+    ` &middot; Datos IQVIA hasta: <b>${m.latest_iqvia || "—"}</b>` +
+    ` &middot; Venta Interna hasta: <b>${m.latest_qlick || "—"}</b>`;
+})();
+
+// Construye entidades a nivel FAMILIA. Cada entidad agrupa productos por familia.
+// { familia, productos: [iqvia_products], mercado_mol, mercado_atc }
+function buildFamilyEntities() {
+  const filtro = sel.value;
+  const filtered = (filtro === "__all__")
+      ? DATA.iqvia_products
+      : DATA.iqvia_products.filter(p => p.familia === filtro);
+
+  const fams = {};
+  filtered.forEach(p => {
+    if (!fams[p.familia]) {
+      fams[p.familia] = { familia: p.familia, productos: [],
+                          mercado_mol: {}, mercado_atc: {} };
+      DATA.all_months.forEach(m => {
+        fams[p.familia].mercado_mol[m] = 0;
+        fams[p.familia].mercado_atc[m] = 0;
+      });
+    }
+    fams[p.familia].productos.push(p);
+    DATA.all_months.forEach(m => {
+      fams[p.familia].mercado_mol[m] += (p.mercado_molecula[m] || 0);
+      fams[p.familia].mercado_atc[m] += (p.mercado_atc[m]      || 0);
+    });
+  });
+  return Object.values(fams).sort((a, b) => a.familia.localeCompare(b.familia));
+}
+
+function renderIqvia() {
+  const entities = buildFamilyEntities();
+  const wrap = document.getElementById("iqvia-table-wrap");
+  if (entities.length === 0 || selectedMonths.length === 0) {
+    wrap.innerHTML = `<div class="empty">Sin datos para esta selección.</div>`;
+    return;
+  }
+  const viewIsMol = currentView === "molecula";
+  const months    = selectedMonths;
+  const ths       = months.map(m => `<th>${m}</th>`).join("");
+  let html = `<table><thead><tr><th style="min-width:280px">Familia / Producto / Presentación</th>${ths}</tr></thead><tbody>`;
+
+  entities.forEach(fam => {
+    const mercado  = viewIsMol ? fam.mercado_mol : fam.mercado_atc;
+    const subLabel = viewIsMol ? "Molécula"      : "ATC";
+
+    // Subtitle: si la familia tiene 1 producto -> molécula/ATC; si tiene N -> lista de productos
+    let subtitle, tagLabel;
+    if (fam.productos.length === 1) {
+      const p = fam.productos[0];
+      subtitle = viewIsMol ? p.molecula : p.atc;
+      tagLabel = subLabel;
+    } else {
+      subtitle = fam.productos.map(p => p.producto).join(" + ");
+      tagLabel = "Productos";
+    }
+
+    // Pack Siegfried total de la familia
+    const famPack = {};
+    months.forEach(m => {
+      famPack[m] = fam.productos.reduce(
+        (sum, p) => sum + p.presentaciones.reduce((s, pr) => s + (pr.si[m] || 0), 0), 0);
+    });
+
+    // === BLUE HEADER: nombre familia + MERCADO TOTAL por mes ===
+    html += `<tr class="prod-header">` +
+      `<td><span class="prod-name">${fam.familia}</span>` +
+      ` <span class="prod-tag">${tagLabel}:</span> <span class="prod-sub">${subtitle}</span>` +
+      `</td>` +
+      months.map(m => `<td class="num prod-total">${fmt(mercado[m])}</td>`).join("") +
+      `</tr>`;
+    if (showEvol) {
+      html += `<tr class="fila-evol"><td>Δ Mercado vs mes ant.</td>` +
+        months.map((m, i) => `<td class="num">${i === 0 ? '<span class="flat">—</span>' : fmtEvol(mercado[m], mercado[months[i-1]])}</td>`).join("") + `</tr>`;
+    }
+
+    // === Total {Familia}: suma de Packs Siegfried ===
+    html += `<tr class="fila-si"><td>Total ${fam.familia}</td>` +
+      months.map(m => `<td class="num">${fmt(famPack[m])}</td>`).join("") + `</tr>`;
+    if (showEvol) {
+      html += `<tr class="fila-evol"><td>Δ Total ${fam.familia} vs mes ant.</td>` +
+        months.map((m, i) => `<td class="num">${i === 0 ? '<span class="flat">—</span>' : fmtEvol(famPack[m], famPack[months[i-1]])}</td>`).join("") + `</tr>`;
+    }
+
+    // === MS % ===
+    html += `<tr class="fila-ms-total"><td>MS %</td>` +
+      months.map(m => {
+        const ms = mercado[m] > 0 ? (famPack[m] / mercado[m] * 100) : 0;
+        return `<td class="num">${fmtPct(ms)}</td>`;
+      }).join("") + `</tr>`;
+
+    // === EXPANDIR PRESENTACIONES (sólo si aggLevel === "presentacion") ===
+    if (aggLevel === "presentacion") {
+      fam.productos.forEach(p => {
+        const pMercado = viewIsMol ? p.mercado_molecula : p.mercado_atc;
+        p.presentaciones.forEach(pres => {
+          const presLabel = fam.productos.length > 1
+              ? `${p.producto} — ${pres.label}` : pres.label;
+          html += `<tr class="pres-header"><td>${presLabel}</td>` +
+            months.map(() => '<td></td>').join("") + `</tr>`;
+          html += `<tr class="fila-si"><td>Pack Siegfried</td>` +
+            months.map(m => `<td class="num">${fmt(pres.si[m])}</td>`).join("") + `</tr>`;
+          if (showEvol) {
+            html += `<tr class="fila-evol"><td>Δ Pack vs mes ant.</td>` +
+              months.map((m, i) => `<td class="num">${i === 0 ? '<span class="flat">—</span>' : fmtEvol(pres.si[m], pres.si[months[i-1]])}</td>`).join("") + `</tr>`;
+          }
+          html += `<tr class="fila-ms"><td>MS %</td>` +
+            months.map(m => {
+              const denom = pMercado[m] || 0;
+              const ms = denom > 0 ? (pres.si[m] / denom * 100) : 0;
+              return `<td class="num">${fmtPct(ms)}</td>`;
+            }).join("") + `</tr>`;
+        });
+      });
+    }
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+}
+
+function renderVI() {
+  const filtro = sel.value;
+  const rows = (filtro === "__all__") ? DATA.venta_interna
+                                       : DATA.venta_interna.filter(r => r.gran_familia === filtro);
+  const wrap = document.getElementById("vi-table-wrap");
+  if (rows.length === 0 || selectedMonths.length === 0) {
+    wrap.innerHTML = `<div class="empty">Sin datos para esta selección.</div>`;
+    return;
+  }
+  const groups = {};
+  rows.forEach(r => {
+    if (!groups[r.gran_familia]) groups[r.gran_familia] = [];
+    groups[r.gran_familia].push(r);
+  });
+  const months = selectedMonths;
+  const ths = months.map(m => `<th>${m}</th>`).join("");
+  let html = `<table><thead><tr><th style="min-width:280px">Familia / Presentación</th>${ths}</tr></thead><tbody>`;
+  Object.keys(groups).sort().forEach(fam => {
+    const totals = months.map(m =>
+      groups[fam].reduce((acc, r) => acc + (r.data[m] || 0), 0));
+    html += `<tr class="familia-header"><td>${fam}</td>` +
+      totals.map(v => `<td class="num">${fmt(v)}</td>`).join("") + `</tr>`;
+    if (showEvol) {
+      html += `<tr class="fila-evol"><td style="padding-left:14px">Δ Familia vs mes ant.</td>` +
+        totals.map((v, i) => `<td class="num">${i === 0 ? '<span class="flat">—</span>' : fmtEvol(v, totals[i-1])}</td>`).join("") + `</tr>`;
+    }
+    groups[fam].forEach(r => {
+      html += `<tr><td style="padding-left:22px;color:var(--muted);">${r.presentacion}</td>` +
+        months.map(m => `<td class="num">${fmt(r.data[m])}</td>`).join("") + `</tr>`;
+      if (showEvol) {
+        html += `<tr class="fila-evol"><td>Δ vs mes ant.</td>` +
+          months.map((m, i) => `<td class="num">${i === 0 ? '<span class="flat">—</span>' : fmtEvol(r.data[m], r.data[months[i-1]])}</td>`).join("") + `</tr>`;
+      }
+    });
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+}
+
+function renderAll() {
+  updateHeader();
+  renderIqvia();
+  renderVI();
+}
+
+renderAll();
+</script>
+</body>
+</html>

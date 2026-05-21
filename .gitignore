@@ -1,0 +1,20 @@
+# Datos de negocio — no versionar
+*.xlsx
+*.xls
+*.csv
+
+# Artefactos de edición / sistema
+~$*
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Claude Code / IDE local config
+.claude/
+
+# Server dev artifacts
+.vscode/

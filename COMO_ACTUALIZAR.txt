@@ -1,0 +1,62 @@
+================================================================
+  Dashboard Siegfried — Cómo mantenerlo actualizado
+================================================================
+
+ESTRUCTURA DE LA CARPETA
+-------------------------
+  IQUVIA_PM.xlsx           ← datos de mercado (IQVIA)
+  QLICK_VTA_INTERNA.xlsx   ← datos de venta interna (QLICK)
+  MAESTRO.xlsx             ← mapeo de productos Siegfried
+  build_dashboard.py       ← script generador
+  dashboard.html           ← archivo generado (lo que se ve en navegador)
+  actualizar_dashboard.bat ← doble-clic para regenerar
+  COMO_ACTUALIZAR.txt      ← este archivo
+
+CUANDO TENGAS DATOS NUEVOS
+---------------------------
+1) Reemplazá / actualizá los Excel correspondientes:
+   - Para datos de mercado nuevos: reemplazá IQUVIA_PM.xlsx
+   - Para venta interna nueva:     reemplazá QLICK_VTA_INTERNA.xlsx
+   - Si se agregan productos:      actualizá MAESTRO.xlsx
+
+   NOTA: el script detecta automáticamente los meses nuevos
+   (ej. al agregar la columna "May-2026" en QLICK o
+   "May 2026 Units" en IQVIA, aparecen sin tocar nada).
+
+2) Cerrá los Excel (Windows bloquea archivos abiertos).
+
+3) Doble-clic en  actualizar_dashboard.bat
+   - Se regenera dashboard.html
+   - Se abre automáticamente en el navegador
+   - La cabecera muestra "Última actualización" con fecha/hora
+
+REGLAS DEL SCRIPT
+------------------
+- Sólo se procesan filas IQVIA con Manufacturer = SIEGFRIED y
+  Utilizar = SI  (el resto se considera mercado/competencia).
+- Sólo se muestran años con ≥ 3 productos Siegfried-SI distintos
+  con ventas (cambiable en build_dashboard.py, constante
+  MIN_PRODUCTS_PER_YEAR).
+- La ventana default = los últimos 6 meses con ventas Siegfried.
+
+PROBLEMAS COMUNES
+------------------
+* "Permission denied" al abrir IQUVIA_PM.xlsx, etc.
+  -> Tenés el Excel abierto. Cerralo y reintentá.
+
+* "py: command not found"
+  -> Falta Python. Instalá desde python.org y reintentá.
+     (Después instalar también:  pip install pandas openpyxl)
+
+* El dashboard no muestra un mes nuevo
+  -> Verificá que ese mes esté como columna en los Excel.
+     IQVIA usa "Mes YYYY Units" en inglés (ej. "May 2026 Units").
+     QLICK  usa "Mes-AAAA" en español (ej. "May-2026").
+
+CAMBIOS RÁPIDOS QUE PODÉS HACER VOS MISMO
+------------------------------------------
+En build_dashboard.py:
+  DEFAULT_WINDOW_SIZE  = 6   ← cuántos meses se muestran por default
+  MIN_PRODUCTS_PER_YEAR = 3  ← umbral para incluir un año en el selector
+
+Cambiá el número, guardá, y doble-clic al .bat para regenerar.
