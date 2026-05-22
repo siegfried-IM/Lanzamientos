@@ -17,7 +17,8 @@ if %ERR% NEQ 0 (
     echo ============================================================
     echo   ERROR: no se pudo generar el dashboard.
     echo   - Asegurate de cerrar los archivos Excel
-    echo     (IQUVIA_PM.xlsx, MAESTRO.xlsx, QLICK_VTA_INTERNA.xlsx^)
+    echo     (MAESTRO.xlsx, QLICK_VTA_INTERNA.xlsx,
+    echo      X_MOLECULA_2.xlsx, X_ATC.xlsx^)
     echo     si los tenes abiertos.
     echo   - Si el problema persiste, revisa el error de arriba.
     echo ============================================================
