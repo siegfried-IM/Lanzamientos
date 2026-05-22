@@ -80,8 +80,15 @@
   th:first-child, td:first-child { text-align: left; }
   th { background: #f9fafb; font-weight: 600; color: var(--muted); font-size: 12px;
        text-transform: uppercase; letter-spacing: 0.4px;
-       position: sticky; top: 0; z-index: 20;
+       position: sticky; top: var(--sticky-h, 0); z-index: 20;
        box-shadow: 0 2px 0 var(--border); }
+  #sticky-bar { position: sticky; top: 0; z-index: 30;
+                background: var(--bg); padding: 14px 0 0;
+                margin: -14px 0 0; }
+  #sticky-bar .toolbar,
+  #sticky-bar .months-card { margin-bottom: 14px; }
+  #sticky-bar::after { content: ""; display: block; height: 6px;
+                       background: linear-gradient(var(--bg), transparent); }
   tr.entity-header td { background: #eef2ff; font-weight: 600; color: var(--accent);
                         border-top: 2px solid var(--accent); }
   tr.prod-header td { background: #eef2ff; color: var(--accent);
@@ -129,6 +136,7 @@
 
 <div class="container">
 
+  <div id="sticky-bar">
   <div class="toolbar">
     <label for="filtro-familia">Familia:</label>
     <select id="filtro-familia">
@@ -164,6 +172,7 @@
       </div>
     </div>
     <div class="chip-list" id="months-chips"></div>
+  </div>
   </div>
 
   <section class="card">
@@ -514,6 +523,19 @@ function renderAll() {
 }
 
 renderAll();
+
+(function setupSticky() {
+  const bar = document.getElementById("sticky-bar");
+  if (!bar) return;
+  const update = () => {
+    document.documentElement.style.setProperty("--sticky-h", bar.offsetHeight + "px");
+  };
+  update();
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(update).observe(bar);
+  }
+  window.addEventListener("resize", update);
+})();
 </script>
 </body>
 </html>
