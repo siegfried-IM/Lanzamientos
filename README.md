@@ -3,6 +3,10 @@
 Dashboard interactivo de seguimiento de lanzamientos: market share IQVIA y venta interna,
 con cortes por familia, producto y presentación.
 
+> **Última actualización**: 17/06/2026 — datos hasta **May-2026** en ambos segmentos
+> (IQVIA mercado total/molécula/ATC + Venta Interna). Generador:
+> `generate_dashboard.py` (lee X_MOLECULA / X_ATC con columna Pack + QLICK + MAESTRO).
+
 > **Repo privado.** El acceso está limitado a miembros de la organización
 > `siegfried-IM`. No hay URL pública del dashboard (GitHub Pages no está
 > disponible en el plan actual para repos privados).
