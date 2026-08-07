@@ -145,6 +145,14 @@
   tr.fila-evol .down { color: #C0392B; }
   tr.fila-evol .flat { color: var(--muted); }
   .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  /* ==== Fix: cada tabla scrollea de costado dentro de su caja (evita romper el layout
+          con muchos meses / vista ATC / presentaciones); 1a columna congelada. ==== */
+  #iqvia-table-wrap, #vi-table-wrap, #recetas-table-wrap {
+    overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  #iqvia-table-wrap > table, #vi-table-wrap > table, #recetas-table-wrap > table { min-width: 680px; }
+  th:first-child, td:first-child { position: sticky; left: 0; border-right: 1px solid var(--border); }
+  td:first-child { background: var(--card); z-index: 6; }
+  th:first-child { z-index: 26; }
   tr.familia-header td { background: var(--surface3); font-weight: 700; color: var(--accent);
                          border-top: 2px solid var(--accent); padding-left: 10px; }
   .empty { color: var(--muted); padding: 18px; text-align: center; font-style: italic; }
