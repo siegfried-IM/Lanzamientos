@@ -148,9 +148,13 @@
   /* ==== Fix: cada tabla scrollea de costado dentro de su caja (evita romper el layout
           con muchos meses / vista ATC / presentaciones); 1a columna congelada. ==== */
   #iqvia-table-wrap, #vi-table-wrap, #recetas-table-wrap {
-    overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
-  #iqvia-table-wrap > table, #vi-table-wrap > table, #recetas-table-wrap > table { min-width: 680px; }
-  th:first-child, td:first-child { position: sticky; left: 0; border-right: 1px solid var(--border); }
+    overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    max-height: calc(100vh - 260px); }
+  /* table-layout fijo + 1a col de ancho fijo => las columnas de meses quedan alineadas
+     entre IQVIA / Venta Interna / Recetas (mismo ancho, misma posición). */
+  #iqvia-table-wrap > table, #vi-table-wrap > table, #recetas-table-wrap > table { table-layout: fixed; }
+  th:first-child, td:first-child { position: sticky; left: 0; width: 300px;
+    border-right: 1px solid var(--border); }
   td:first-child { background: var(--card); z-index: 6; }
   th:first-child { z-index: 26; }
   tr.familia-header td { background: var(--surface3); font-weight: 700; color: var(--accent);
@@ -447,7 +451,7 @@ function renderIqvia() {
   const viewIsMol = currentView === "molecula";
   const months    = selectedMonths;
   const ths       = months.map(m => `<th>${m}</th>`).join("");
-  let html = `<table><thead><tr><th style="min-width:280px">Familia / Producto / Presentación</th>${ths}</tr></thead><tbody>`;
+  let html = `<table style="width:${months.length*96+300}px;min-width:100%"><thead><tr><th>Familia / Producto / Presentación</th>${ths}</tr></thead><tbody>`;
 
   entities.forEach(fam => {
     const mercado  = viewIsMol ? fam.mercado_mol : fam.mercado_atc;
@@ -548,7 +552,7 @@ function renderVI() {
   });
   const months = selectedMonths;
   const ths = months.map(m => `<th>${m}</th>`).join("");
-  let html = `<table><thead><tr><th style="min-width:280px">Familia / Presentación</th>${ths}</tr></thead><tbody>`;
+  let html = `<table style="width:${months.length*96+300}px;min-width:100%"><thead><tr><th>Familia / Presentación</th>${ths}</tr></thead><tbody>`;
   Object.keys(groups).sort().forEach(fam => {
     const totals = months.map(m => {
       const vals = groups[fam].map(r => r.data[m]);
@@ -591,7 +595,7 @@ function renderRecetas() {
   }
   const months = selectedMonths;
   const ths = months.map(m => `<th>${m}</th>`).join("");
-  let html = `<table><thead><tr><th style="min-width:280px">Producto / Mercado</th>${ths}</tr></thead><tbody>`;
+  let html = `<table style="width:${months.length*96+300}px;min-width:100%"><thead><tr><th>Producto / Mercado</th>${ths}</tr></thead><tbody>`;
   prods.forEach(p => {
     const mer = p.mercado || {}, sie = p.sieg || {};
     // BLUE HEADER: producto + mercado + RECETAS MERCADO por mes
@@ -639,6 +643,19 @@ renderAll();
     new ResizeObserver(update).observe(bar);
   }
   window.addEventListener("resize", update);
+})();
+
+// Sincroniza el scroll horizontal de las 3 tablas para que los meses queden alineados.
+(function syncHScroll() {
+  const wraps = ["iqvia-table-wrap", "vi-table-wrap", "recetas-table-wrap"]
+    .map(id => document.getElementById(id)).filter(Boolean);
+  let lock = false;
+  wraps.forEach(w => w.addEventListener("scroll", () => {
+    if (lock) return;
+    lock = true;
+    wraps.forEach(o => { if (o !== w && o.scrollLeft !== w.scrollLeft) o.scrollLeft = w.scrollLeft; });
+    lock = false;
+  }));
 })();
 </script>
 </body>
