@@ -101,12 +101,13 @@
                     border-bottom: 1px solid var(--border); }
   section.card h2 .sub-h { font-size: 12px; font-weight: 400; color: var(--muted);
                            text-transform: none; letter-spacing: normal; }
-  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
-  th, td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px;
+          table-layout: fixed; }
+  th, td { padding: 7px 7px; text-align: right; border-bottom: 1px solid var(--border); }
   th:first-child, td:first-child { text-align: left; }
   th { background: var(--surface2); font-weight: 600; color: var(--muted); font-size: 11px;
        text-transform: uppercase; letter-spacing: 0.06em;
-       position: sticky; top: 0; z-index: 20;
+       position: sticky; top: var(--sticky-h, 0); z-index: 20;
        box-shadow: 0 1px 0 var(--border2); }
   #sticky-bar { position: sticky; top: 0; z-index: 30;
                 background: var(--bg); padding: 14px 0 0;
@@ -145,18 +146,16 @@
   tr.fila-evol .down { color: #C0392B; }
   tr.fila-evol .flat { color: var(--muted); }
   .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-  /* ==== Fix: cada tabla scrollea de costado dentro de su caja (evita romper el layout
-          con muchos meses / vista ATC / presentaciones); 1a columna congelada. ==== */
-  #iqvia-table-wrap, #vi-table-wrap, #recetas-table-wrap {
-    overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-    max-height: calc(100vh - 260px); }
-  /* table-layout fijo + 1a col de ancho fijo => las columnas de meses quedan alineadas
-     entre IQVIA / Venta Interna / Recetas (mismo ancho, misma posición). */
-  #iqvia-table-wrap > table, #vi-table-wrap > table, #recetas-table-wrap > table { table-layout: fixed; }
-  th:first-child, td:first-child { position: sticky; left: 0; width: 300px;
-    border-right: 1px solid var(--border); }
-  td:first-child { background: var(--card); z-index: 6; }
-  th:first-child { z-index: 26; }
+  /* Scroll ÚNICO de página (sin sub-ventanas): las tablas no tienen scroll propio; el
+     header de meses queda sticky al viewport (regla `th`). Con `table-layout: fixed` +
+     1a columna de ancho fijo, las columnas de meses entran en pantalla (no desbordan) y
+     quedan ALINEADAS entre IQVIA / Venta Interna / Recetas. */
+  th:first-child, td:first-child { width: 230px; border-right: 1px solid var(--border); }
+  /* Las cifras se achican un punto si hay muchos meses, para no recortarse. */
+  .num { white-space: nowrap; }
+  table.dense .num, table.dense th:not(:first-child) { font-size: 11px; letter-spacing: -0.04em; }
+  table.dense th, table.dense td { padding-left: 4px; padding-right: 4px; }
+  table.dense tr.fila-evol td:not(:first-child) { font-size: 9.5px; letter-spacing: -0.05em; }
   tr.familia-header td { background: var(--surface3); font-weight: 700; color: var(--accent);
                          border-top: 2px solid var(--accent); padding-left: 10px; }
   .empty { color: var(--muted); padding: 18px; text-align: center; font-style: italic; }
@@ -243,6 +242,13 @@ const DATA = {"all_months": ["Ene-2025", "Feb-2025", "Mar-2025", "Abr-2025", "Ma
 const fmt = (n) => {
   if (n === null || n === undefined || isNaN(n)) return "—";
   if (n === 0) return "0";
+  // Con muchos meses las columnas son angostas: los números grandes van compactos
+  // (1,2 M) para que no se recorten. Con pocos meses, número completo.
+  if (selectedMonths.length > 12 && Math.abs(n) >= 10000) {
+    return Math.abs(n) >= 1e6
+      ? (n / 1e6).toLocaleString("es-AR", {minimumFractionDigits: 1, maximumFractionDigits: 1}) + "M"
+      : Math.round(n / 1e3).toLocaleString("es-AR") + "k";
+  }
   return Math.round(n).toLocaleString("es-AR");
 };
 const fmtPct = (n) => (n === 0 || !isFinite(n)) ? "0,0%" :
@@ -451,7 +457,7 @@ function renderIqvia() {
   const viewIsMol = currentView === "molecula";
   const months    = selectedMonths;
   const ths       = months.map(m => `<th>${m}</th>`).join("");
-  let html = `<table style="width:${months.length*96+300}px;min-width:100%"><thead><tr><th>Familia / Producto / Presentación</th>${ths}</tr></thead><tbody>`;
+  let html = `<table class="${months.length>8?'dense':''}"><thead><tr><th>Familia / Producto / Presentación</th>${ths}</tr></thead><tbody>`;
 
   entities.forEach(fam => {
     const mercado  = viewIsMol ? fam.mercado_mol : fam.mercado_atc;
@@ -552,7 +558,7 @@ function renderVI() {
   });
   const months = selectedMonths;
   const ths = months.map(m => `<th>${m}</th>`).join("");
-  let html = `<table style="width:${months.length*96+300}px;min-width:100%"><thead><tr><th>Familia / Presentación</th>${ths}</tr></thead><tbody>`;
+  let html = `<table class="${months.length>8?'dense':''}"><thead><tr><th>Familia / Presentación</th>${ths}</tr></thead><tbody>`;
   Object.keys(groups).sort().forEach(fam => {
     const totals = months.map(m => {
       const vals = groups[fam].map(r => r.data[m]);
@@ -595,7 +601,7 @@ function renderRecetas() {
   }
   const months = selectedMonths;
   const ths = months.map(m => `<th>${m}</th>`).join("");
-  let html = `<table style="width:${months.length*96+300}px;min-width:100%"><thead><tr><th>Producto / Mercado</th>${ths}</tr></thead><tbody>`;
+  let html = `<table class="${months.length>8?'dense':''}"><thead><tr><th>Producto / Mercado</th>${ths}</tr></thead><tbody>`;
   prods.forEach(p => {
     const mer = p.mercado || {}, sie = p.sieg || {};
     // BLUE HEADER: producto + mercado + RECETAS MERCADO por mes
@@ -636,9 +642,17 @@ renderAll();
   const bar = document.getElementById("sticky-bar");
   if (!bar) return;
   const update = () => {
-    document.documentElement.style.setProperty("--sticky-h", bar.offsetHeight + "px");
+    const h = bar.offsetHeight;
+    // Guard: descarta mediciones absurdas (a veces se captura un valor gigante en un
+    // reflow transitorio); la barra de controles nunca supera ~400px.
+    if (h >= 40 && h <= 600) {
+      document.documentElement.style.setProperty("--sticky-h", h + "px");
+    }
   };
   update();
+  requestAnimationFrame(update);
+  window.addEventListener("load", update);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
   if (typeof ResizeObserver !== "undefined") {
     new ResizeObserver(update).observe(bar);
   }
